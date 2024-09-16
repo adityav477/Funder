@@ -1,0 +1,77 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+//String name;
+//address owner;
+//uint256 timeStamp;
+//Donation[] donations;
+// Withdrawal[] withdrawals;
+
+model Organization {
+  name       String       @unique
+  owner      String
+  address    String       @unique
+  timeStamp  DateTime     @default(now())
+  donations  Donation[]
+  withdrawal Withdrawal[]
+}
+
+//struct Donor {
+//   address donorAddress;
+//  uint256 totalDonated;
+// uint256[] donationAmounts;
+//string[] donationMessages;
+//uint256[] donationTimestamps;
+//}
+
+model Donor {
+  name         String
+  address      String     @unique
+  totalDonated Int        @default(0)
+  donations    Donation[]
+  password     String
+}
+
+//struct Donation {
+////address donor;
+////uint256 amount;
+////string message;
+////uint256 timestamp;
+//}
+
+model Donation {
+  id               String       @id @default(cuid())
+  amount           Int
+  timeStamp        DateTime     @default(now())
+  Organization     Organization @relation(fields: [organizationName], references: [name])
+  organizationName String
+  Donor            Donor        @relation(fields: [donorAddress], references: [address])
+  donorAddress     String
+}
+
+//struct Withdrawal {
+////uint256 organizationId;
+////uint256 timeStamp;
+////string purpose;
+//}
+
+model Withdrawal {
+  id               String       @id @default(cuid())
+  organizationId   Int
+  timestamp        DateTime     @default(now())
+  purpose          String       @default("")
+  Organization     Organization @relation(fields: [organizationName], references: [name])
+  organizationName String
+}
