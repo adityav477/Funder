@@ -16,7 +16,12 @@ import { Label } from "@/components/ui/label"
 import { providerAtom, publicKeyAtom } from "../../atoms/recoil";
 import { useRecoilValue } from "recoil";
 
+//react-hooks
+import { useForm, SubmitHandler } from "react-hook-form";
+
 export default function UserDonationForm() {
+  const { register, handleSubmit, formState: { errors } } = useForm();
+
   const location = useLocation()
   const navigate = useNavigate()
   const { search } = location
@@ -56,14 +61,14 @@ export default function UserDonationForm() {
                 <Input id="to" defaultValue={"0xE01B55a609B817A416c2b3b9a88F68b4973a86A6"} placeholder="Public-key of Organisation" />
               </div>
             </div>
+            <div className="space-y-4 mt-5">
+              <Button className="w-full" onClick={handleClick}>Donate</Button>
+              <Button className="w-full" variant="outline" onClick={() => { navigate("/user/organisation") }}>Cancel</Button>
+            </div>
           </form>
         </CardContent>
-        <CardFooter className="flex justify-between">
-          <Button variant="outline" onClick={() => { navigate("/user/organisation") }}>Cancel</Button>
-          <Button onClick={handleClick}>Donate</Button>
-        </CardFooter>
       </Card>
-    </div>
+    </div >
   )
 }
 

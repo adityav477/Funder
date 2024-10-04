@@ -1,4 +1,5 @@
 import { Web3 } from "web3";
+import axios from "axios";
 
 const web3 = new Web3(import.meta.env.VITE_SEPOLIA_NODE_URL);
 // console.log("private key is ", import.meta.env.PRIVATE_KEY_ACCOUNT1);
@@ -256,13 +257,22 @@ async function getBlockNumber() {
   return blockNumber;
 
 }
+
 async function getBalance(address: string) {
-  // console.log("type of ", typeof (address));
+  console.log("type of ", typeof (address));
+  console.log("the address in contract js is ", address);
   const accountBalance = await web3.eth.getBalance(address);
   // console.log("accountBalance in contract", accountBalance);
   // console.log("accountBalance in ether is ", web3.utils.fromWei(accountBalance, "ether"));
   // console.log("account eth sepolia 1 is ")
   return web3.utils.fromWei(accountBalance, "ether");
+}
+
+async function getUserDetails(address: string) {
+  const response = await axios.post("http://localhost:3000/api/v1/user/getUserDetails", {
+    address: address,
+  });
+  console.log(response);
 }
 
 

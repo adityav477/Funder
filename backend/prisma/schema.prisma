@@ -21,8 +21,10 @@ datasource db {
 
 model Organization {
   name       String       @unique
-  owner      String
+  owner      String?
+  description String      @default("")
   address    String       @unique
+  password   String       
   timeStamp  DateTime     @default(now())
   donations  Donation[]
   withdrawal Withdrawal[]

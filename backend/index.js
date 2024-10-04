@@ -1,32 +1,42 @@
 import express from "express";
-import user from "./routes/user.js"
-import organisation from "./routes/organisation.js"
+import user from "./routes/user/user.js"
+import organization from "./routes/organization/organization.js";
 import dotenv from "dotenv";
 import { getBalance, sendEth, getOwnerFronContract } from "./lib/contract.js";
 import cors from "cors";
-import zod from "zod";
-import prisma from "./lib/db.js";
-import bcrypt from "bcrypt";
-import web3 from "web3"
+import cookieParser from "cookie-parser";
+import jwt from 'jsonwebtoken';
 
 const app = express();
 
 dotenv.config();
-
 app.use(express.json());
-app.use(cors())
-app.use("/api/v1/user", user)
-app.use("/api/v1/organisation", organisation)
 
-const zodInputSchema = zod.object({
-  name: zod.string().min(1).max(50),
-  publicKey: zod.string().refine((publicKey) => {
-    return web3.utils.toChecksumAddress(publicKey);
-  }, {
-    message: "Hakuna matata"
-  }),
-  password: zod.string().min(6),
-})
+const corsOptions = {
+  origin: "http://localhost:5173",  // Frontend URL
+  credentials: true,                // Allow sending cookies with cross-origin requests
+};
+app.use(cookieParser())
+app.use(cors(corsOptions));
+
+app.use("/api/v1/user", user)
+app.use("/api/v1/organization", organization)
+
+// const verifyToken = (req, res, next) => {
+//   const token = req.cookies.token;
+//
+//   if (!token) {
+//     res.status(405).json({
+//       message: "User Not LoggedIn",
+//     })
+//   }
+//   console.log(token);
+//   try {
+//     const decoded = jwt.verify(token, process.env.JWT_SECRET, options)
+//   } catch (error) {
+//
+//   }
+// }
 
 app.get("/", async (req, res) => {
   // const address = `0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045`;
@@ -43,79 +53,27 @@ app.get("/", async (req, res) => {
   })
 })
 
-app.post("/user/signup", async (req, res) => {
-  // console.log("reqest reached");
-  console.log("req in user/singup is ", req.body);
-  const { success, } = zodInputSchema.safeParse(req.body);
+app.get("/protected", (req, res) => {
+  console.log(req.cookies);
+  const token = req.cookies.refreshToken;
 
-  console.log("zod returns ", success);
-
-  if (!success) {
-    return res.sendStatus(401);
+  if (!token) {
+    console.log("token not found");
+    return res.status(500).json({
+      message: "refreshToken not found"
+    });
   }
 
-  const { name, publicKey, password } = req.body;
-  // console.log("name,publicKey,password ", name, publicKey, password);
+  const result = jwt.verify(token, process.env.JWT_SECRET);
+  // console.log("result is ", result);
 
-  const userExists = await prisma.donor.findUnique({
-    where: {
-      address: publicKey,
-    }
-  })
-  console.log("user exists ", userExists);
-
-  if (userExists) {
-    console.log("inside user exists");
-    return res.status(402).json({
-      message: "User Already Exists"
-    })
+  if (result) {
+    return res.status(200);
   }
-
-  const hashedPassword = await bcrypt.hash(password, 10);
-  const newUser = await prisma.donor.create({
-    data: {
-      name: name,
-      address: publicKey,
-      password: hashedPassword
-    }
-  })
-
-  console.log("new user is ", newUser);
-
-  return res.sendStatus(200);
+  return res.status(500).json({
+    message: "Invalid token login again",
+  });
 })
-
-app.post("/user/signin", async (req, res) => {
-  const { success, } = zodInputSchema.safeParse(req.body);
-
-  if (!success) {
-    return req.sendStatus(401).json({
-      message: "Input Out of Format"
-    })
-  }
-  const { name, publicKey, password } = req.body;
-
-  const userExists = await prisma.donor.findUnique({
-    where: {
-      address: publicKey
-    }
-  })
-  console.log("user in signin backend", userExists);
-
-  if (!userExists) {
-    return res.status(402);
-  }
-
-  const successPassword = await bcrypt.compare(password, userExists?.password);
-
-  if (!successPassword) {
-    return res.status(403);
-  }
-  console.log("successPassword is ", successPassword);
-
-  return res.sendStatus(200);
-})
-
 
 app.listen(3000, () => {
   console.log("Backend startd at port 3000");

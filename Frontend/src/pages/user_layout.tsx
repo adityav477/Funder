@@ -9,32 +9,33 @@ import { navigationMenuTriggerStyle } from "@/components/ui/navigation-menu";
 
 import { Link, useLocation } from "react-router-dom";
 
-// import { useRecoilValue } from "recoil";
-// import { publicKeyAtom } from "../../atoms/recoil";
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect } from "react";
 import { useState } from "react";
-
 import { getBalance } from "@/lib/contract";
 
 export default function UserLayout() {
+
   const location = useLocation();
   const { pathname } = location;
-  // const publicKey = useRecoilValue(publicKeyAtom);
-  const publicKey = sessionStorage.getItem("publicKey") || "";
-  console.log("publicKey before ", publicKey);
-  const [balance, setBalance] = useState<string>("");
 
-  useEffect(() => {
+  // const publicKey = localStorage.getItem("publicKey") || "";
+  const [balance, setBalance] = useState<string>("");
+  let publicKey: string;
+
+  useLayoutEffect(() => {
+    publicKey = localStorage.getItem("publicKey") || "";
+    console.log("useEffect is called ");
     getBalanceUser(publicKey);
-  }, [])
+  }, [balance])
 
   const getBalanceUser = async (address: string) => {
     // console.log("inside getBalanceUser");
-    // console.log("publicKey is ", publicKey);
+    console.log("publicKey is ", publicKey);
     const newBalance = await getBalance(address);
-    // console.log("newBalance is ", newBalance);
+    console.log("newBalance is ", newBalance);
     setBalance(newBalance);
   }
+
   return (
     <div>
       <div className="flex justify-between p-5 space-x-4">
